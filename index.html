@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grid</title>
+    <style>
+      .parent {
+        border: 1px solid red;
+        display: grid;
+        /* grid-template-columns: 50% 25% 25%; */
+        /* grid-template-columns: 1fr 1fr 1fr; */
+        /* grid-template-columns: repeat(3, 1fr); */
+        /* minmax grid */
+        /* grid-template-columns: 1fr minmax(300px, 1fr); */
+        /* grid-template-columns: repeat(3, minmax(300px, 1fr)); */
+        /* autofit auto fill */
+        grid-template-rows: repeat(3, 300px);
+        grid-template-columns: repeat(3, 300px);
+        /* grid-row-gap: 10%;
+        grid-column-gap: 10%; */
+        /* grid-gap: 10px; */
+        /* justify-content: center; */
+        /* height: 800px; */
+        /* align-items: center; */
+        /* justify-items: center; */
+        /* place-items: center; */
+      }
+      .one {
+        border: 1px solid;
+      }
+      .a {
+        grid-column-start: 1;
+        grid-column-end: 4;
+      }
+      .b {
+        grid-column-start: 2;
+        grid-column-end: 4;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="parent">
+      <div class="one a">1</div>
+      <div class="one b">2</div>
+      <div class="one">3</div>
+      <div class="one">4</div>
+      <div class="one">5</div>
+      <div class="one">6</div>
+      <div class="one">7</div>
+      <div class="one">8</div>
+      <div class="one">9</div>
+    </div>
+  </body>
+</html>
