@@ -62,7 +62,7 @@ export interface CruxData {
 
 export interface CruxResult {
   url?: string;
-  data: CruxData;
+  data?: CruxData;
   status?: "success" | "error";
   error?: string;
   code?: number;
@@ -139,115 +139,117 @@ export const CruxProvider: React.FC<{ children: ReactNode }> = ({
   });
 
   // Process the raw API data into a more usable format
-  const processApiResponse = (response: CruxApiResponse): ProcessedResult[] => {
-    return response.results.map((result) => {
-      const { data, url } = result;
-      const { record, urlNormalizationDetails } = data;
-      const { metrics, key, collectionPeriod } = record;
+  const processApiResponse = (result: CruxResult): ProcessedResult | null => {
+    if (result.status === "error" || !result.data) {
+      return null;
+    }
 
-      // Format collection period
-      const startDate = new Date(
-        collectionPeriod.firstDate.year,
-        collectionPeriod.firstDate.month - 1,
-        collectionPeriod.firstDate.day
-      ).toLocaleDateString();
-      const endDate = new Date(
-        collectionPeriod.lastDate.year,
-        collectionPeriod.lastDate.month - 1,
-        collectionPeriod.lastDate.day
-      ).toLocaleDateString();
-      const periodString = `${startDate} - ${endDate}`;
+    const { data, url } = result;
+    const { record, urlNormalizationDetails } = data;
+    const { metrics, key, collectionPeriod } = record;
 
-      // Helper function to determine rating
-      const getRating = (
-        metric: string,
-        value: number | string
-      ): "good" | "needs-improvement" | "poor" => {
-        const numValue =
-          typeof value === "string" ? Number.parseFloat(value) : value;
+    // Format collection period
+    const startDate = new Date(
+      collectionPeriod.firstDate.year,
+      collectionPeriod.firstDate.month - 1,
+      collectionPeriod.firstDate.day
+    ).toLocaleDateString();
+    const endDate = new Date(
+      collectionPeriod.lastDate.year,
+      collectionPeriod.lastDate.month - 1,
+      collectionPeriod.lastDate.day
+    ).toLocaleDateString();
+    const periodString = `${startDate} - ${endDate}`;
 
-        switch (metric) {
-          case "fcp":
-            return numValue < 1800
-              ? "good"
-              : numValue < 3000
-              ? "needs-improvement"
-              : "poor";
-          case "inp":
-            return numValue < 200
-              ? "good"
-              : numValue < 500
-              ? "needs-improvement"
-              : "poor";
-          case "lcp":
-            return numValue < 2500
-              ? "good"
-              : numValue < 4000
-              ? "needs-improvement"
-              : "poor";
-          case "cls":
-            return numValue < 0.1
-              ? "good"
-              : numValue < 0.25
-              ? "needs-improvement"
-              : "poor";
-          case "ttfb":
-            return numValue < 800
-              ? "good"
-              : numValue < 1800
-              ? "needs-improvement"
-              : "poor";
-          default:
-            return "good";
-        }
-      };
+    // Helper function to determine rating
+    const getRating = (
+      metric: string,
+      value: number | string
+    ): "good" | "needs-improvement" | "poor" => {
+      const numValue =
+        typeof value === "string" ? Number.parseFloat(value) : value;
 
-      // Extract and process metrics
-      const fcpValue = metrics.first_contentful_paint.percentiles.p75;
-      const inpValue = metrics.interaction_to_next_paint.percentiles.p75;
-      const lcpValue = metrics.largest_contentful_paint.percentiles.p75;
-      const clsValue = metrics.cumulative_layout_shift.percentiles.p75;
-      const ttfbValue = metrics.experimental_time_to_first_byte.percentiles.p75;
+      switch (metric) {
+        case "fcp":
+          return numValue < 1800
+            ? "good"
+            : numValue < 3000
+            ? "needs-improvement"
+            : "poor";
+        case "inp":
+          return numValue < 200
+            ? "good"
+            : numValue < 500
+            ? "needs-improvement"
+            : "poor";
+        case "lcp":
+          return numValue < 2500
+            ? "good"
+            : numValue < 4000
+            ? "needs-improvement"
+            : "poor";
+        case "cls":
+          return numValue < 0.1
+            ? "good"
+            : numValue < 0.25
+            ? "needs-improvement"
+            : "poor";
+        case "ttfb":
+          return numValue < 800
+            ? "good"
+            : numValue < 1800
+            ? "needs-improvement"
+            : "poor";
+        default:
+          return "good";
+      }
+    };
 
-      return {
-        url: url || "",
-        normalizedUrl: urlNormalizationDetails.normalizedUrl,
-        formFactor: key.formFactor,
-        collectionPeriod: periodString,
-        metrics: {
-          fcp: {
-            name: "First Contentful Paint",
-            value: fcpValue,
-            rating: getRating("fcp", fcpValue),
-            unit: "ms",
-          },
-          inp: {
-            name: "Interaction to Next Paint",
-            value: inpValue,
-            rating: getRating("inp", inpValue),
-            unit: "ms",
-          },
-          lcp: {
-            name: "Largest Contentful Paint",
-            value: lcpValue,
-            rating: getRating("lcp", lcpValue),
-            unit: "ms",
-          },
-          cls: {
-            name: "Cumulative Layout Shift",
-            value: clsValue,
-            rating: getRating("cls", clsValue),
-            unit: "",
-          },
-          ttfb: {
-            name: "Time to First Byte",
-            value: ttfbValue,
-            rating: getRating("ttfb", ttfbValue),
-            unit: "ms",
-          },
+    // Extract and process metrics
+    const fcpValue = metrics.first_contentful_paint.percentiles.p75;
+    const inpValue = metrics.interaction_to_next_paint.percentiles.p75;
+    const lcpValue = metrics.largest_contentful_paint.percentiles.p75;
+    const clsValue = metrics.cumulative_layout_shift.percentiles.p75;
+    const ttfbValue = metrics.experimental_time_to_first_byte.percentiles.p75;
+
+    return {
+      url: url || "",
+      normalizedUrl: urlNormalizationDetails?.normalizedUrl || key.url,
+      formFactor: key.formFactor,
+      collectionPeriod: periodString,
+      metrics: {
+        fcp: {
+          name: "First Contentful Paint",
+          value: fcpValue,
+          rating: getRating("fcp", fcpValue),
+          unit: "ms",
         },
-      };
-    });
+        inp: {
+          name: "Interaction to Next Paint",
+          value: inpValue,
+          rating: getRating("inp", inpValue),
+          unit: "ms",
+        },
+        lcp: {
+          name: "Largest Contentful Paint",
+          value: lcpValue,
+          rating: getRating("lcp", lcpValue),
+          unit: "ms",
+        },
+        cls: {
+          name: "Cumulative Layout Shift",
+          value: clsValue,
+          rating: getRating("cls", clsValue),
+          unit: "",
+        },
+        ttfb: {
+          name: "Time to First Byte",
+          value: ttfbValue,
+          rating: getRating("ttfb", ttfbValue),
+          unit: "ms",
+        },
+      },
+    };
   };
 
   // Fetch data from the API
@@ -280,9 +282,28 @@ export const CruxProvider: React.FC<{ children: ReactNode }> = ({
 
         const data: CruxApiResponse = await response.json();
 
-        // Process the response
-        const processedResults = processApiResponse(data);
-        setResults(processedResults);
+        // Handle errors and successes
+        let hasSuccessfulResults = false;
+        const processedResults: ProcessedResult[] = [];
+
+        data.results.forEach((result) => {
+          if (result.status === "error") {
+            // Display error toast for this URL
+            toast.error(`Error for ${result.url}: ${result.error}`);
+          } else {
+            // Process successful result
+            const processed = processApiResponse(result);
+            if (processed) {
+              processedResults.push(processed);
+              hasSuccessfulResults = true;
+            }
+          }
+        });
+        if (hasSuccessfulResults) {
+          setResults(processedResults);
+        } else {
+          setError("No data could be retrieved for any of the provided URLs");
+        }
       } catch (err) {
         setError(
           typeof err === "string"
