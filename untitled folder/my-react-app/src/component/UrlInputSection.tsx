@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Paper,
   Typography,
@@ -7,22 +7,49 @@ import {
   Button,
   IconButton,
   Stack,
+  FormHelperText,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
 import { useCrux } from "../context/CruxContext";
+
 const UrlInputSection: React.FC = () => {
   const { urls, setUrls, fetchData, loading } = useCrux();
+  const [urlErrors, setUrlErrors] = useState<string[]>([]);
+
+  const isValidUrl = (url: string) => {
+    const urlPattern = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i;
+    return urlPattern.test(url);
+  };
 
   const handleUrlChange = (index: number, value: string) => {
+    const trimmedValue = value.trim();
     const newUrls = [...urls];
-    newUrls[index] = value;
+    newUrls[index] = trimmedValue;
     setUrls(newUrls);
+
+    // Validate URL and update errors state
+    const newErrors = [...urlErrors];
+
+    if (trimmedValue === "") {
+      newErrors[index] = "URL cannot be empty";
+    } else if (!isValidUrl(trimmedValue)) {
+      newErrors[index] = "Invalid URL format";
+    } else if (
+      newUrls.filter((url, i) => url === trimmedValue && i !== index).length > 0
+    ) {
+      newErrors[index] = "URL must be unique";
+    } else {
+      newErrors[index] = "";
+    }
+
+    setUrlErrors(newErrors);
   };
 
   const addUrlField = () => {
     setUrls([...urls, ""]);
+    setUrlErrors([...urlErrors, ""]);
   };
 
   const removeUrlField = (index: number) => {
@@ -30,6 +57,10 @@ const UrlInputSection: React.FC = () => {
       const newUrls = [...urls];
       newUrls.splice(index, 1);
       setUrls(newUrls);
+
+      const newErrors = [...urlErrors];
+      newErrors.splice(index, 1);
+      setUrlErrors(newErrors);
     }
   };
 
@@ -54,7 +85,10 @@ const UrlInputSection: React.FC = () => {
       <form onSubmit={handleSubmit}>
         <Stack spacing={2}>
           {urls.map((url, index) => (
-            <Box key={index} sx={{ display: "flex", gap: 1 }}>
+            <Box
+              key={index}
+              sx={{ display: "flex", gap: 1, alignItems: "center" }}
+            >
               <TextField
                 fullWidth
                 label={`URL ${index + 1}`}
@@ -64,6 +98,7 @@ const UrlInputSection: React.FC = () => {
                 placeholder="https://example.com"
                 size="small"
                 required
+                error={!!urlErrors[index]}
               />
               {urls.length > 1 && (
                 <IconButton
@@ -77,6 +112,16 @@ const UrlInputSection: React.FC = () => {
               )}
             </Box>
           ))}
+
+          {/* Show error message below the input */}
+          {urls.map(
+            (url, index) =>
+              urlErrors[index] && (
+                <FormHelperText key={index} error>
+                  {urlErrors[index]}
+                </FormHelperText>
+              )
+          )}
 
           <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
             <Button
@@ -92,7 +137,11 @@ const UrlInputSection: React.FC = () => {
               variant="contained"
               startIcon={<SearchIcon />}
               type="submit"
-              disabled={loading || urls.every((url) => url.trim() === "")}
+              disabled={
+                loading ||
+                urls.every((url) => url.trim() === "") ||
+                urlErrors.some((error) => error !== "")
+              }
             >
               {loading ? "Loading..." : "Analyze"}
             </Button>

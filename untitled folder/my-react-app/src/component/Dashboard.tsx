@@ -8,11 +8,9 @@ import FilterControls from "./FilterControls";
 import SummaryStats from "./SummaryStats";
 import TabPanel from "./TabPanel";
 import ResultsTable from "./ResultsTable";
-import ResultsChart from "./ResultChart";
 
 const Dashboard: React.FC = () => {
   const { results, loading, error } = useCrux();
-  const [activeTab, setActiveTab] = React.useState<"table" | "chart">("table");
 
   return (
     <Container
@@ -36,16 +34,7 @@ const Dashboard: React.FC = () => {
         <>
           <FilterControls />
           <SummaryStats />
-          <TabPanel
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            tabs={[
-              { value: "table", label: "Table View" },
-              { value: "chart", label: "Chart View" },
-            ]}
-          >
-            {activeTab === "table" ? <ResultsTable /> : <ResultsChart />}
-          </TabPanel>
+          <ResultsTable />
         </>
       )}
     </Container>

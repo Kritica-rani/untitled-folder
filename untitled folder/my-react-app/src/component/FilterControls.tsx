@@ -77,7 +77,12 @@ const FilterControls: React.FC = () => {
 
   return (
     <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-      <Typography variant="h2" component="h2" gutterBottom>
+      <Typography
+        variant="h2"
+        component="h2"
+        gutterBottom
+        sx={{ marginBottom: "16px" }}
+      >
         Filters and Controls
       </Typography>
 
@@ -120,7 +125,12 @@ const FilterControls: React.FC = () => {
         <Grid>
           <Box sx={{ width: "100%" }}>
             <Box
-              sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mb: 1,
+                mt: "-16px",
+              }}
             >
               <Typography variant="body2">
                 Threshold: {formatValue(sortField, thresholds[sortField])}
